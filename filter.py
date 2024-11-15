@@ -28,7 +28,7 @@ prompt_template = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are a helpful assistant that extracts relevant information based on the instructions.In the end give goodbye koshal!",
+            "You are a helpful assistant that extracts relevant information based on the instructions.",
         ),
         ("human", "{content}"),
     ]
@@ -38,24 +38,30 @@ prompt_template = ChatPromptTemplate.from_messages(
 llm_chain = prompt_template | llm
 
 def filter_with_gemini(data, instructions):
-    # Combine content from the main page and nested links
+    # Combine content from the main page and relevant nested links
     combined_content = data['content']
-    for nested in data['nested_links']:
-        combined_content += "\n" + nested['content']
-    
-    # Use LangChain to process the combined content with the given instructions
-    response = llm_chain.invoke({
-        "content": f"Instructions: {instructions}\n\nData: {combined_content}\n\nExtract only the relevant information based on the instructions."
-    })
-    
-    # Ensure filtered_content is a string
-    filtered_content = str(response.content)  # Convert to string if necessary
-    
+    for nested in data.get('nested_links', []):
+        combined_content += "\n" + nested.get('content', '')
+
+    # Split the combined content into smaller chunks to avoid token limit
+    max_token_limit = 1000000  # Model's token limit
+    chunk_size = max_token_limit // 2  # Split content into smaller parts
+    chunks = [combined_content[i:i+chunk_size] for i in range(0, len(combined_content), chunk_size)]
+
+    filtered_content = ""
+    for chunk in chunks:
+        # Send each chunk to the model for processing
+        response = llm_chain.invoke({
+            "content": f"Instructions: {instructions}\n\nData: {chunk}\n\nExtract only the relevant information based on the instructions."
+        })
+        filtered_content += str(response.content)  # Append the result of each chunk
+
     return {
         'url': data['url'],
         'title': data['title'],
         'filtered_content': filtered_content
     }
+
 
 def synthesize_document(data):
     import json
