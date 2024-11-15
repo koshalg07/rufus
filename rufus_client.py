@@ -1,4 +1,3 @@
-# rufus_client.py
 import requests
 
 class RufusClient:

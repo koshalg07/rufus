@@ -1,4 +1,3 @@
-# scraper.py
 import aiohttp
 import asyncio
 from bs4 import BeautifulSoup
@@ -19,18 +18,18 @@ async def scrape_website(url, depth=1, keywords=None, instructions=None):
 
     async with aiohttp.ClientSession() as session:
         try:
-            # Fetch the main page content
+
             html = await fetch(session, url)
             soup = BeautifulSoup(html, 'html.parser')
 
-            # Extract page content and check for relevance
+
             main_content = soup.get_text()
             is_relevant = (
                 any(keyword in main_content for keyword in keywords or []) 
                 or (instructions and instructions.lower() in main_content.lower())
             )
 
-            # Prepare data structure for the current page
+
             data = {
                 'url': url,
                 'title': soup.title.string if soup.title else '',
@@ -38,17 +37,17 @@ async def scrape_website(url, depth=1, keywords=None, instructions=None):
                 'links': []
             }
 
-            # Find links and filter them for relevance
+
             links = soup.find_all('a', href=True)
             for link in links:
                 href = link['href']
-                if not href.startswith('http'):  # Resolve relative links
+                if not href.startswith('http'):  
                     href = urllib.parse.urljoin(url, href)
                 
                 if not keywords or is_relevant_link(link, keywords):
                     data['links'].append(href)
 
-            # Recursively crawl nested links only if relevant
+
             if depth > 1 and is_relevant:
                 nested_data = await asyncio.gather(
                     *[scrape_website(link, depth - 1, keywords, instructions) for link in data['links']]
