@@ -12,8 +12,6 @@ load_dotenv()
 
 app = FastAPI()
 
-#example
-
 class ScrapeRequest(BaseModel):
     url: str
     instructions: str
