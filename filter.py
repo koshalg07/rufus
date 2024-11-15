@@ -59,7 +59,7 @@ prompt_template = ChatPromptTemplate.from_messages(
             
             The goal is to only return the relevant extracted content.
             
-            Ensure that the output does not include newline characters (\n). Instead, format the content as continuous text or use bullet points, separating key information where necessary.
+            If the instruction asks for 'points' or 'list of items', format the output as numbered points. If 'points' are not requested, provide the content as continuous text without using bullet points or numbered lists.
             """),
     ]
 )
@@ -82,7 +82,7 @@ def filter_with_gemini(data, instructions):
     for chunk in chunks:
 
         response = llm_chain.invoke({
-            "content": f"Instructions: {instructions}\n\nData: {chunk}\n\nPlease carefully review the following data and extract only the relevant information based on the instructions provided above. If any keywords are mentioned in the instructions, use them to guide your search and extraction."
+            "content": f"Instructions: {instructions}\n\nData: {chunk}\n\nPlease carefully review the following data and extract only the relevant information based on the instructions provided above. If any keywords are mentioned in the instructions, use them to guide your search and extraction. If you encounter a newline character \n, replace it with a space to ensure the text is continuous and formatted correctly."
         })
         filtered_content += str(response.content)  
 
@@ -92,7 +92,3 @@ def filter_with_gemini(data, instructions):
         'filtered_content': filtered_content
     }
 
-
-def synthesize_document(data):
-    import json
-    return json.dumps(data, indent=2)  

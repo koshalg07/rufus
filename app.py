@@ -4,10 +4,13 @@ import os
 import asyncio
 from dotenv import load_dotenv
 from scraper import scrape_website
-from filter import filter_with_gemini, synthesize_document
+from filter import filter_with_gemini
 from langchain.chains import LLMChain
 from langchain.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
+from fastapi.responses import JSONResponse
+import json
+
 
 
 
@@ -20,9 +23,6 @@ class ScrapeRequest(BaseModel):
     instructions: str
     # depth: int = 1
     # keywords: list = []
-
-def synthesize_document(data):
-    return data
 
 
 load_dotenv()
@@ -53,6 +53,7 @@ prompt_template = ChatPromptTemplate.from_messages(
 )
 
 llm_chain = prompt_template | llm
+
 
 
 def extract_information(instructions):
@@ -86,8 +87,8 @@ async def scrape(request: ScrapeRequest):
     try:
         data = await scrape_website(url, depth, keywords)
         filtered_data = filter_with_gemini(data, instructions)
-        document = synthesize_document(filtered_data)
-        return document["filtered_content"]
+        filtered_data["filtered_content"]=filtered_data["filtered_content"].replace("\n", " ").strip()
+        return filtered_data 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
